@@ -136,6 +136,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     /** The azan over Home at prayer times; null when the theme turns it off or has no prayer_zone. */
     private Azan azan;
     private boolean azanReducedMotion;
+    private android.animation.ObjectAnimator prayerBlink;
     private String vpnApp;
     private SpringAnimation springX, springY;
     private float glassTargetX, glassTargetY;
@@ -794,6 +795,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         handler.removeCallbacks(minuteTick);
         handler.removeCallbacks(wallTick);
         if (azan != null) azan.stop();
+        stopBlink();
+        Fatihah.stop();
         Azan.homeResumed = false;
         // Nothing of ours stays on screen over another app; an undecided prompt simply returns next time.
         if (cardPrompt != null) cardPrompt.dismiss();
@@ -1511,7 +1514,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private void checkAzan() {
         if (azan == null || azan.showing() || !hasWindowFocus()) return;
         int due = Azan.takeDue(this, prayerZone);
-        if (due >= 0) azan.start(this, prayerZone, due, azanReducedMotion);
+        if (due >= 0) {
+            Fatihah.stop();
+            azan.start(this, prayerZone, due, azanReducedMotion);
+        }
     }
 
     /**
@@ -1551,6 +1557,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             PrayerTimes.Day tomorrow = PrayerTimes.day(this, prayerZone, PrayerTimes.key(t));
             left = 24 * 60 - nowMin + (tomorrow != null ? tomorrow : today).minutes[0];
         }
+        soonToPrayer(left, next, now);
         boolean is24 = android.text.format.DateFormat.is24HourFormat(this);
         int bright = 0xFFFFFFFF, dim = 0x80FFFFFF;
         android.text.SpannableStringBuilder b = new android.text.SpannableStringBuilder();
@@ -1574,6 +1581,40 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         b.setSpan(new android.text.style.ForegroundColorSpan(bright), start, b.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         prayerRow.setText(b);
         prayerRow.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * Three minutes or less to the next prayer: the prayer row blinks and Al-Fatihah is recited
+     * once (fatihah.mp3 in the theme folder). To try it, touch fatihah-now in the theme folder.
+     */
+    private void soonToPrayer(int left, int next, java.util.Calendar now) {
+        java.io.File dir = Config.dir(this);
+        java.io.File testFile = dir != null ? new java.io.File(dir, "fatihah-now") : null;
+        boolean test = testFile != null && testFile.delete();
+        boolean soon = test || (left >= 1 && left <= 3);
+        if (!soon) {
+            stopBlink();
+            return;
+        }
+        if (prayerBlink == null) {
+            prayerBlink = android.animation.ObjectAnimator.ofFloat(prayerRow, View.ALPHA, 1f, 0.2f);
+            prayerBlink.setDuration(700);
+            prayerBlink.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+            prayerBlink.setRepeatMode(android.animation.ValueAnimator.REVERSE);
+            prayerBlink.start();
+        }
+        if (hasWindowFocus() && (test || left >= 2)) {
+            String key = test ? "test" + System.currentTimeMillis() : PrayerTimes.key(now) + "#" + next;
+            Fatihah.startOnce(this, key);
+        }
+    }
+
+    private void stopBlink() {
+        if (prayerBlink != null) {
+            prayerBlink.cancel();
+            prayerBlink = null;
+        }
+        if (prayerRow != null) prayerRow.setAlpha(1f);
     }
 
     /** Shows the Wi-Fi network name on the button when we can read it, otherwise the connection type. */
