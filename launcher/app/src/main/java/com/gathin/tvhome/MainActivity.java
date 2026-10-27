@@ -137,6 +137,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private Azan azan;
     private boolean azanReducedMotion;
     private android.animation.ObjectAnimator prayerBlink;
+    private WeatherNow weather;
     private String vpnApp;
     private SpringAnimation springX, springY;
     private float glassTargetX, glassTargetY;
@@ -246,6 +247,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             checkAzan();
             updateWifiLabel();
             refreshPlacesIfDue();
+            if (weather != null) weather.update();
             handler.postDelayed(this, MINUTE_MS);
         }
     };
@@ -321,6 +323,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             date.setPadding(0, (int) (4 * density), 0, 0);
         }
         prayerRow = findViewById(R.id.prayerRow);
+        weather = new WeatherNow(this, findViewById(R.id.weatherCard), findViewById(R.id.weatherTemp),
+                findViewById(R.id.weatherDesc), findViewById(R.id.weatherPlace));
         prayerZone = cfg.prayerZone;
         if (cfg.azan && !prayerZone.isEmpty()) {
             azan = new Azan(root, () -> {
@@ -701,6 +705,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         updateShamsiDate();
         updatePrayerTimes();
         Azan.homeResumed = true;
+        if (weather != null) weather.update();
         checkAzan();
         AzanAlarm.scheduleNext(this);
         updateWifiLabel();
