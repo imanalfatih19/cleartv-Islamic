@@ -38,8 +38,8 @@ final class WeatherNow {
         if (card == null) return;
         float d = ctx.getResources().getDisplayMetrics().density;
         GradientDrawable g = new GradientDrawable();
-        g.setColor(0x33FFFFFF);
-        g.setStroke(Math.max(1, Math.round(1.5f * d)), 0x66FFFFFF);
+        g.setColor(0x80000000);
+        g.setStroke(Math.max(1, Math.round(1.5f * d)), 0x44FFFFFF);
         g.setCornerRadius(24 * d);
         card.setBackground(g);
         if (place != null) place.setText("Merchang");

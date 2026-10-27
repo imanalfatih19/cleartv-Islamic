@@ -323,6 +323,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             date.setPadding(0, (int) (4 * density), 0, 0);
         }
         prayerRow = findViewById(R.id.prayerRow);
+        int[] shadowIds = {R.id.prayerRow, R.id.heroName, R.id.heroWhere, R.id.heroDesc};
+        for (int sid : shadowIds) {
+            android.widget.TextView sv = findViewById(sid);
+            if (sv != null) sv.setShadowLayer(8f, 0f, 2f, 0xCC000000);
+        }
         weather = new WeatherNow(this, findViewById(R.id.weatherCard), findViewById(R.id.weatherTemp),
                 findViewById(R.id.weatherDesc), findViewById(R.id.weatherPlace));
         prayerZone = cfg.prayerZone;
